@@ -4,46 +4,39 @@ import useRestaurantMenu from "../utlis/useRestaurantMenu";
 import Shimmer from "./Shimmer";
 import RestaurantCategory from "./RestaurantCategory";
 
-
 const RestaurantMenu = () => {
+  const { resId } = useParams();
+  const resInfo = useRestaurantMenu(resId);
+  const [showIndex, setShowIndex] = useState(null);
 
-   const {resId} = useParams();
-   const resInfo = useRestaurantMenu(resId);
-   const [showIndex,setShowIndex] = useState(null);
-   
+  // Show shimmer if data is still loading
+  if (!resInfo) return <Shimmer />;
 
-  
-   if(resInfo === null) return <Shimmer/> ;
+  // Destructure restaurant info
+  const { name, costForTwoMessage, cuisines } = resInfo?.cards[2]?.card?.card?.info || {};
 
-const {name,costForTwoMessage,cuisines} = resInfo?.cards[2]?.card?.card?.info;
-    
-const { cards } = resInfo || {};
-const itemCards = cards?.[4]?.groupedCard?.cardGroupMap?.REGULAR?.cards[2]?.card?.card?.itemCards;
+  // Extracting categories from the restaurant data
+  const categories = resInfo?.cards?.[4]?.groupedCard?.cardGroupMap?.REGULAR?.cards?.filter(
+    (c) => c.card?.card?.["@type"] === "type.googleapis.com/swiggy.presentation.food.v2.ItemCategory"
+  ) || [];
 
-const categories = 
-    cards?.[4]?.groupedCard?.cardGroupMap?.REGULAR?.cards.filter(
-    (c) => 
-        c.card?.card?.["@type"] === "type.googleapis.com/swiggy.presentation.food.v2.ItemCategory"      
-    );
+  return (
+    <div className="text-center">
+      {/* Restaurant details */}
+      <h2 className="font-bold my-5 text-2xl">{name}</h2>
+      <p className="font-semibold text-lg">{cuisines?.join(", ")} - {costForTwoMessage}</p>
+      
+      {/* Categories Accordion */}
+      {categories.map((category, index) => (
+        <RestaurantCategory
+          key={category?.card?.card?.title}
+          data={category?.card?.card}
+          showItems={index === showIndex}
+          setShowIndex={() => setShowIndex(index)}
+        />
+      ))}
+    </div>
+  );
+};
 
-
-    
-    return  (
-        <div className="text-center">
-    <h2 className="font-bold my-5 text-2xl">{name}</h2>
-    <p className="font-semibold text-lg">{cuisines.join(", ")}-{costForTwoMessage}</p>
-    {/** catagories accordions */}
-    {categories.map((category,index) => (
-        //Controlled Components
-      <RestaurantCategory 
-      key={category?.card?.card?.title}
-      data={category?.card?.card}
-      showItems={index === showIndex ? true : false}
-      setShowIndex = {() => setShowIndex(index)}
-      />
-    ))}
-</div>
-
-    )
-}
 export default RestaurantMenu;
